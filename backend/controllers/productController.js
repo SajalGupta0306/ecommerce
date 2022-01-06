@@ -1,11 +1,21 @@
 const productSchema = require("../models/productModel");
 const Errorhandler = require("../utils/errorhandler");
 const handleAsyncError = require("../middleware/handleAsyncError");
+const Apifeatures = require("../features/apifeatures");
 
 // getting all products
 exports.getAllProdcts = handleAsyncError(async (req, res) => {
-  const products = await productSchema.find();
-  res.status(200).json({ message: "Success", products });
+  const recordsPerPage = 10;
+  const totalProductCount = await productSchema.countDocuments();
+  // passing the query and the query params
+  // eg: http://localhost:1994/api/v1/getAllProducts?keyword=test
+  const queryParams = new Apifeatures(productSchema.find(), req.query)
+    .search()
+    .filter()
+    .pagination(recordsPerPage);
+  // queryParams returns both query and queryStr, hence using the same for below execution
+  const products = await queryParams.query;
+  res.status(200).json({ message: "Success", products, totalProductCount});
 });
 
 // creating a new product - Only Admin Accessible
